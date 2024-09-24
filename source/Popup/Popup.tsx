@@ -1,51 +1,46 @@
-import * as React from 'react'
+import React, { useEffect, useState } from 'react'
+import { browser } from 'webextension-polyfill-ts'
 
-import { useState } from 'react'
-
-const Popup = () => {
-	const [url, setUrl] = useState('')
+const Popup: React.FC = () => {
 	const [blockedSites, setBlockedSites] = useState<string[]>([])
+	const [newSite, setNewSite] = useState('')
 
-	React.useEffect(() => {
-		chrome.storage.local.get(['blockedSites'], result => {
+	useEffect(() => {
+		browser.storage.local.get(['blockedSites']).then(result => {
 			setBlockedSites(result.blockedSites || [])
 		})
 	}, [])
 
 	const addSite = () => {
-		const updatedSites = [...blockedSites, url]
-		chrome.storage.local.set({ blockedSites: updatedSites })
-		setBlockedSites(updatedSites)
-		setUrl('')
+		if (newSite && !blockedSites.includes(newSite)) {
+			const updatedSites = [...blockedSites, newSite]
+			setBlockedSites(updatedSites)
+			browser.storage.local.set({ blockedSites: updatedSites })
+			setNewSite('')
+		}
 	}
 
 	const removeSite = (site: string) => {
 		const updatedSites = blockedSites.filter(s => s !== site)
-		chrome.storage.local.set({ blockedSites: updatedSites })
 		setBlockedSites(updatedSites)
+		browser.storage.local.set({ blockedSites: updatedSites })
 	}
 
 	return (
-		<div style={{ padding: '10px', fontFamily: 'Arial' }}>
-			<h3>Block Sites</h3>
+		<div>
+			<h1>Blocked Sites</h1>
 			<input
 				type='text'
-				value={url}
-				onChange={e => setUrl(e.target.value)}
-				placeholder='Enter site URL'
-				style={{ marginRight: '10px' }}
+				value={newSite}
+				onChange={e => setNewSite(e.target.value)}
+				placeholder='Add a site to block'
 			/>
 			<button onClick={addSite}>Add</button>
 			<ul>
 				{blockedSites.map(site => (
 					<li key={site}>
 						{site}
-						<button
-							onClick={() => removeSite(site)}
-							style={{ marginLeft: '10px' }}
-						>
-							Remove
-						</button>
+						<button onClick={() => removeSite(site)}>Remove</button>
 					</li>
 				))}
 			</ul>

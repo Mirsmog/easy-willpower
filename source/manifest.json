@@ -20,6 +20,7 @@
 		"https://*/*",
 		"webRequest",
 		"webRequestBlocking",
+		"webNavigation",
 		"storage",
 		"tabs"
 	],
