@@ -1,8 +1,8 @@
 import axios from 'axios'
-import 'dotenv/config'
+import config from '../../config'
 
-const userId = process.env.USER_ID
-const apiKey = process.env.API_KEY
+const userId = config.USER_ID
+const apiKey = config.API_KEY
 
 export const getWakaTimeStats = async () => {
 	if (!apiKey || !userId) throw Error('API_KEY or USER_ID is not defiend')
@@ -20,11 +20,11 @@ export const getWakaTimeStats = async () => {
 		const stat = data.data
 
 		const totalDurationSeconds = stat.reduce((acc: number, item: { duration: number }) => acc + item.duration, 0)
-		const totalMinutes = Math.floor(totalDurationSeconds / 60)
+		const newBalance = Math.floor(totalDurationSeconds / 60)
 
-		return { totalMinutes }
+		return { newBalance }
 	} catch (error) {
 		console.error('Error fetching WakaTime data', error)
-		return { totalMinutes: 0 }
+		return { newBalance: 0 }
 	}
 }

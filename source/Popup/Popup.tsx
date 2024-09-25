@@ -2,28 +2,28 @@ import React, { useEffect, useState } from 'react'
 import { browser } from 'webextension-polyfill-ts'
 
 const Popup: React.FC = () => {
-	const [blockedSites, setBlockedSites] = useState<string[]>([])
+	const [accessLimitedSites, setAccessLimitedSites] = useState<string[]>([])
 	const [newSite, setNewSite] = useState('')
 
 	useEffect(() => {
-		browser.storage.local.get(['blockedSites']).then(result => {
-			setBlockedSites(result.blockedSites || [])
+		browser.storage.local.get(['accessLimitedSites']).then(result => {
+			setAccessLimitedSites(result.accessLimitedSites || [])
 		})
 	}, [])
 
 	const addSite = () => {
-		if (newSite && !blockedSites.includes(newSite)) {
-			const updatedSites = [...blockedSites, newSite]
-			setBlockedSites(updatedSites)
-			browser.storage.local.set({ blockedSites: updatedSites })
+		if (newSite && !accessLimitedSites.includes(newSite)) {
+			const updatedSites = [...accessLimitedSites, newSite]
+			setAccessLimitedSites(updatedSites)
+			browser.storage.local.set({ accessLimitedSites: updatedSites })
 			setNewSite('')
 		}
 	}
 
 	const removeSite = (site: string) => {
-		const updatedSites = blockedSites.filter(s => s !== site)
-		setBlockedSites(updatedSites)
-		browser.storage.local.set({ blockedSites: updatedSites })
+		const updatedSites = accessLimitedSites.filter(s => s !== site)
+		setAccessLimitedSites(updatedSites)
+		browser.storage.local.set({ accessLimitedSites: updatedSites })
 	}
 
 	return (
@@ -37,7 +37,7 @@ const Popup: React.FC = () => {
 			/>
 			<button onClick={addSite}>Add</button>
 			<ul>
-				{blockedSites.map(site => (
+				{accessLimitedSites.map(site => (
 					<li key={site}>
 						{site}
 						<button onClick={() => removeSite(site)}>Remove</button>

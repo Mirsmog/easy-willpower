@@ -1,58 +1,110 @@
+import { Tabs, WebRequest } from 'webextension-polyfill'
 import { browser } from 'webextension-polyfill-ts'
 import { getWakaTimeStats, showTimeLeftAlert } from '../utils'
 
-let balance = 0
-
-const API_UPDATE_INTERVAL = 60000 // Интервал обновления данных API (1 минута)
-const CHECK_INTERVAL = 60000 // Интервал проверки (1 минута)
-
-async function updateWakaTimeStats() {
-	const stats = await getWakaTimeStats()
-	const currentTotalMinutes = stats.totalMinutes
-
-	const { previousTotalMinutes, balance: savedBalance } = await browser.storage.local.get([
-		'previousTotalMinutes',
-		'balance'
-	])
-
-	let previousMinutes = previousTotalMinutes || 0
-	let currentBalance = savedBalance || 0
-
-	const newMinutes = currentTotalMinutes - previousMinutes
-	if (newMinutes > 0) {
-		currentBalance += newMinutes
-		previousMinutes = currentTotalMinutes
-		await browser.storage.local.set({ previousTotalMinutes: previousMinutes, balance: currentBalance })
-	}
-	balance = currentBalance
-
-	// Проверяем доступ к сайтам сразу, а не по интервалу
-	await checkSites()
+async function setLocalStorage(keys: { [s: string]: any }) {
+	await browser.storage.local.set(keys)
 }
 
-async function checkSites() {
-	const { blockedSites } = await browser.storage.local.get(['blockedSites'])
-	const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-	const activeTab = tabs[0]
+async function getLocalStorage(keys: string[]) {
+	return await browser.storage.local.get(keys)
+}
 
-	for (const site of blockedSites) {
-		if (activeTab.url?.includes(site)) {
-			// Если баланс меньше или равен нулю, сразу блокируем сайт
-			if (balance <= 0) {
-				await browser.tabs.update(activeTab.id, { url: 'https://some.com' })
-				return // Выходим из функции, не продолжаем дальнейшую проверку
-			} else {
-				// Если баланс мал, но не нулевой, показываем попап
-				if (balance <= 2 && activeTab.id) {
-					await showTimeLeftAlert(activeTab.id)
-				}
-				balance--
-				await browser.storage.local.set({ balance })
+async function handleTabs() {
+	const { accessLimitedSites = [] } = await getLocalStorage(['accessLimitedSites'])
+	const tabs = await browser.tabs.query({ currentWindow: true })
+	const currentTab = tabs.find(tab => tab.active)
+	const isOnBlockedPage = currentTab?.url?.includes('blocked.html') || false
+	let isLimitedTabAudible = false
+	let isOnLimitedTab = false
+
+	for (const tab of tabs) {
+		for (const site of accessLimitedSites) {
+			if (tab.url?.includes(site)) {
+				if (tab.audible) isLimitedTabAudible = true
+				if (tab.active) isOnLimitedTab = true
 			}
 		}
+		if (isLimitedTabAudible && isOnLimitedTab) break
+	}
+
+	const isBalanceInUse = (isOnLimitedTab && !isOnBlockedPage) || isLimitedTabAudible
+
+	return { isBalanceInUse, currentTab, isOnBlockedPage, isLimitedTabAudible, isOnLimitedTab }
+}
+
+async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
+	const blockUrl = browser.runtime.getURL(`blocked.html?refer=${tab.url}`)
+	const referUrl = new URLSearchParams(new URL(tab.url || '').search).get('refer')
+
+	if (unblock && referUrl) {
+		await browser.tabs.update(tab.id, { url: referUrl })
+	} else {
+		await browser.tabs.update(tab.id, { url: blockUrl })
 	}
 }
 
-updateWakaTimeStats()
-setInterval(updateWakaTimeStats, API_UPDATE_INTERVAL)
-setInterval(checkSites, CHECK_INTERVAL)
+async function refreshBalance() {
+	//const { newBalance } = await getWakaTimeStats()
+	const newBalance = 1
+	const { prevBalance = 0, lastBalance = 0 } = await getLocalStorage(['lastBalance', 'prevBalance'])
+
+	const diffBalance = newBalance - prevBalance
+
+	if (diffBalance > 0) {
+		const currentBalance = lastBalance + diffBalance
+		await setLocalStorage({ prevBalance: newBalance, lastBalance: currentBalance })
+	}
+
+	await checkAndUpdateBalance()
+}
+
+async function checkAndUpdateBalance() {
+	let { lastBalance } = await getLocalStorage(['lastBalance'])
+	const { isBalanceInUse, isOnBlockedPage, currentTab } = await handleTabs()
+
+	if (!currentTab || !currentTab.id) return
+
+	if (isOnBlockedPage && lastBalance > 0) {
+		handleBlockTab(currentTab, true)
+	}
+
+	if (!isOnBlockedPage && lastBalance === 1) {
+		await showTimeLeftAlert(currentTab.id)
+		handleBlockTab(currentTab)
+	}
+
+	if (isBalanceInUse && lastBalance > 0) {
+		lastBalance--
+		await setLocalStorage({ lastBalance })
+	}
+}
+refreshBalance()
+
+setInterval(refreshBalance, 60000)
+
+browser.webRequest.onBeforeRequest.addListener(
+	async (details: WebRequest.OnBeforeRequestDetailsType) => {
+		const { lastBalance } = await getLocalStorage(['lastBalance'])
+		const { accessLimitedSites = [] } = await getLocalStorage(['accessLimitedSites'])
+
+		if (!details.originUrl?.includes('blocked.html')) {
+			if (lastBalance <= 0) {
+				for (const site of accessLimitedSites) {
+					if (details.url.includes(site)) {
+						const cleanUrl = new URL(details.originUrl || '')
+						const originalUrl = `${cleanUrl.href}`
+
+						const blockedPageUrl = browser.runtime.getURL(`blocked.html?refer=${encodeURIComponent(originalUrl)}`)
+
+						browser.tabs.update(details.tabId, { url: blockedPageUrl })
+						return { cancel: true }
+					}
+				}
+			}
+		}
+		return { cancel: false }
+	},
+	{ urls: ['<all_urls>'] },
+	['blocking']
+)
