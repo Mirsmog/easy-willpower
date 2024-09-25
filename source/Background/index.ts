@@ -1,14 +1,6 @@
 import { Tabs, WebRequest } from 'webextension-polyfill'
 import { browser } from 'webextension-polyfill-ts'
-import { getWakaTimeStats, showTimeLeftAlert } from '../utils'
-
-async function setLocalStorage(keys: { [s: string]: any }) {
-	await browser.storage.local.set(keys)
-}
-
-async function getLocalStorage(keys: string[]) {
-	return await browser.storage.local.get(keys)
-}
+import { getLocalStorage, getWakaTimeStats, setLocalStorage, showTimeLeftAlert } from '../utils'
 
 async function handleTabs() {
 	const { accessLimitedSites = [] } = await getLocalStorage(['accessLimitedSites'])
@@ -45,8 +37,7 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 }
 
 async function refreshBalance() {
-	//const { newBalance } = await getWakaTimeStats()
-	const newBalance = 1
+	const { newBalance } = await getWakaTimeStats()
 	const { prevBalance = 0, lastBalance = 0 } = await getLocalStorage(['lastBalance', 'prevBalance'])
 
 	const diffBalance = newBalance - prevBalance
