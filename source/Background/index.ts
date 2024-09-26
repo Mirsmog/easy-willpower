@@ -38,7 +38,16 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 
 async function refreshBalance() {
 	const { newBalance } = await getWakaTimeStats()
-	const { prevBalance = 0, lastBalance = 0 } = await getLocalStorage(['lastBalance', 'prevBalance'])
+	const today = new Date().toLocaleDateString
+	const {
+		prevBalance = 0,
+		lastBalance = 0,
+		lastDateCheck = ''
+	} = await getLocalStorage(['lastBalance', 'prevBalance', 'lastDateCheck'])
+
+	if (lastDateCheck !== today) {
+		await setLocalStorage({ prevBalance: 0, lastBalance: 0, lastDateCheck: today })
+	}
 
 	const diffBalance = newBalance - prevBalance
 
