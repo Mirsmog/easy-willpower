@@ -1,6 +1,6 @@
 import { getLocalStorage, setLocalStorage } from '.'
 
-enum Rarity {
+export enum Rarity {
 	Casual = 'casual',
 	Rare = 'rare',
 	Epic = 'epic',
@@ -13,7 +13,7 @@ interface IRewardEffect {
 	value: number
 }
 
-interface IHistoryReward {
+export interface IHistoryReward {
 	name: Rarity
 	effect: string
 	balanceIncrease: number

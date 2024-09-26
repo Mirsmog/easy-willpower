@@ -1,7 +1,9 @@
 import { Tabs, WebRequest } from 'webextension-polyfill'
 import { browser } from 'webextension-polyfill-ts'
 import { getLocalStorage, getWakaTimeStats, setLocalStorage, showTimeLeftAlert } from '../utils'
+import { showToast } from '../utils/alert'
 import { applyReward } from '../utils/reward'
+import './styles.scss'
 
 async function handleTabs() {
 	const { accessLimitedSites = [] } = await getLocalStorage(['accessLimitedSites'])
@@ -38,8 +40,10 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 }
 
 async function refreshBalance() {
-	const { newBalance } = await getWakaTimeStats()
+	//const { newBalance } = await getWakaTimeStats()
+	//
 	const today = new Date().toLocaleDateString()
+	const newBalance = 4000
 
 	const {
 		prevBalance = 0,
@@ -92,6 +96,9 @@ async function checkAndUpdateBalance() {
 		lastBalance--
 		await setLocalStorage({ lastBalance })
 	}
+	const { rewardsHistory } = await getLocalStorage(['rewardsHistory'])
+	const reward = rewardsHistory[Math.floor(Math.random() * rewardsHistory.length)]
+	showToast({ tabId: currentTab.id, reward })
 }
 refreshBalance()
 
