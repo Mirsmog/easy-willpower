@@ -33,7 +33,7 @@ const rewards: IReward[] = [
 			{ type: 'fixed', value: 5 },
 			{ type: 'percentage', value: 3 }
 		],
-		chance: 0.7
+		chance: 0.8
 	},
 	{
 		rarity: Rarity.Rare,
@@ -41,7 +41,7 @@ const rewards: IReward[] = [
 			{ type: 'fixed', value: 15 },
 			{ type: 'percentage', value: 10 }
 		],
-		chance: 0.5
+		chance: 0.4
 	},
 	{
 		rarity: Rarity.Epic,
@@ -49,7 +49,7 @@ const rewards: IReward[] = [
 			{ type: 'fixed', value: 25 },
 			{ type: 'percentage', value: 15 }
 		],
-		chance: 0.3
+		chance: 0.2
 	},
 	{
 		rarity: Rarity.Legendary,

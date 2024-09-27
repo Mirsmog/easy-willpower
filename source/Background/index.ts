@@ -1,8 +1,6 @@
 import { Tabs, WebRequest } from 'webextension-polyfill'
 import { browser } from 'webextension-polyfill-ts'
-import { getLocalStorage, getWakaTimeStats, setLocalStorage, showTimeLeftAlert } from '../utils'
-import { showToast } from '../utils/alert'
-import { applyReward } from '../utils/reward'
+import { getLocalStorage, applyReward, getWakaTimeStats, setLocalStorage, showInfoToast } from '../utils'
 import './styles.scss'
 
 async function handleTabs() {
@@ -40,10 +38,8 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 }
 
 async function refreshBalance() {
-	//const { newBalance } = await getWakaTimeStats()
-	//
+	const { newBalance } = await getWakaTimeStats()
 	const today = new Date().toLocaleDateString()
-	const newBalance = 4000
 
 	const {
 		prevBalance = 0,
@@ -56,8 +52,7 @@ async function refreshBalance() {
 		await setLocalStorage({
 			lastBalance: unusedTime,
 			prevBalance: 0,
-			lastDateCheck: today,
-			rewardsHistory: []
+			lastDateCheck: today
 		})
 	}
 
@@ -67,7 +62,7 @@ async function refreshBalance() {
 		let currentBalance = lastBalance + diffBalance
 
 		const rewardChance = Math.random()
-		if (rewardChance <= 0.3) {
+		if (rewardChance <= 0.2) {
 			currentBalance = await applyReward(currentBalance)
 		}
 
@@ -87,18 +82,15 @@ async function checkAndUpdateBalance() {
 		handleBlockTab(currentTab, true)
 	}
 
-	if (!isOnBlockedPage && lastBalance === 1) {
-		await showTimeLeftAlert(currentTab.id)
-		handleBlockTab(currentTab)
-	}
-
 	if (isBalanceInUse && lastBalance > 0) {
 		lastBalance--
 		await setLocalStorage({ lastBalance })
 	}
-	const { rewardsHistory } = await getLocalStorage(['rewardsHistory'])
-	const reward = rewardsHistory[Math.floor(Math.random() * rewardsHistory.length)]
-	showToast({ tabId: currentTab.id, reward })
+
+	if (!isOnBlockedPage && lastBalance === 1) {
+		await showInfoToast({ variant: 'error', timer: 60, tabId: currentTab.id, showTimer: true })
+		handleBlockTab(currentTab)
+	}
 }
 refreshBalance()
 
