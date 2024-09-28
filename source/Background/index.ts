@@ -45,8 +45,9 @@ async function refreshBalance() {
 		prevBalance = 0,
 		lastBalance = 0,
 		savedBalance = 0,
-		lastDateCheck = ''
-	} = await getLocalStorage(['lastBalance', 'prevBalance', 'lastDateCheck', 'savedBalance'])
+		lastDateCheck = '',
+		heatEffect = { value: 0, level: 1 }
+	} = await getLocalStorage(['lastBalance', 'prevBalance', 'lastDateCheck', 'savedBalance', 'heatEffect'])
 
 	if (lastDateCheck !== today) {
 		const unusedTime = Math.min(lastBalance, 360)
@@ -86,7 +87,11 @@ async function refreshBalance() {
 			}
 		}
 
-		await setLocalStorage({ prevBalance: newBalance, lastBalance: currentBalance })
+		if (heatEffect.value > 0) {
+			heatEffect.value = Math.max(heatEffect.value - 2, 0)
+		}
+
+		await setLocalStorage({ prevBalance: newBalance, lastBalance: currentBalance, heatEffect })
 	}
 
 	await checkAndUpdateBalance()
@@ -108,9 +113,9 @@ async function checkAndUpdateBalance() {
 		heatValue = Math.max(heatValue - 2, 0)
 	}
 
-	if (heatValue > 118) {
+	if (heatValue > 90) {
 		heatLevel = 3
-	} else if (heatValue > 58) {
+	} else if (heatValue > 60) {
 		heatLevel = 2
 	} else {
 		heatLevel = 1

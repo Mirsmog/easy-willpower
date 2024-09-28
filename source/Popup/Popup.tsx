@@ -128,24 +128,33 @@ const styles = {
 
 const Popup: React.FC = () => {
 	const [accessLimitedSites, setAccessLimitedSites] = useState<string[]>([])
+	const [heatValue, setHeatValue] = useState({ value: 0 })
 	const [balance, setBalance] = useState(0)
 	const [newSite, setNewSite] = useState('')
 	const [rewardsHistory, setRewardsHistory] = useState<IHistoryReward[]>([])
 
 	const fetchData = async () => {
-		const result = await browser.storage.local.get(['accessLimitedSites', 'lastBalance', 'rewardsHistory'])
+		const result = await browser.storage.local.get([
+			'accessLimitedSites',
+			'lastBalance',
+			'rewardsHistory',
+			'heatEffect'
+		])
 		setAccessLimitedSites(result.accessLimitedSites || [])
 		setBalance(result.lastBalance || 0)
 		setRewardsHistory(result.rewardsHistory || [])
+		setHeatValue({ value: result.heatEffect.value || 0 })
 	}
 
 	useEffect(() => {
 		fetchData()
 
 		const intervalId = setInterval(() => {
-			browser.storage.local.get(['lastBalance', 'rewardsHistory']).then(result => {
+			browser.storage.local.get(['lastBalance', 'rewardsHistory', 'heatEffect']).then(result => {
 				setBalance(result.lastBalance || 0)
 				setRewardsHistory(result.rewardsHistory || [])
+
+				setHeatValue({ value: result.heatEffect.value || 0 })
 			})
 		}, 60000)
 
@@ -174,7 +183,15 @@ const Popup: React.FC = () => {
 	return (
 		<div style={styles.container}>
 			<h1 style={styles.header}>🎉 Time Balance</h1>
-			<div style={styles.balance}>{formattedTime}</div>
+			<div>
+				<div style={styles.balance}>{formattedTime}</div>
+			</div>
+			{heatValue.value > 0 && (
+				<div style={{ display: 'flex', justifyContent: 'center', gap: 5, fontSize: 18 }}>
+					<span style={{ fontWeight: 600, color: '#2c3e50' }}>HEAT - </span>
+					<span style={{ color: 'red', fontSize: 18 }}>({heatValue.value})</span>
+				</div>
+			)}
 
 			<h2 style={styles.subHeader}>🛡️ Blocked Sites</h2>
 			<div style={styles.inputContainer}>
