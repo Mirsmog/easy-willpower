@@ -38,8 +38,7 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 }
 
 async function refreshBalance() {
-	//const { newBalance } = await getWakaTimeStats()
-	const newBalance = 3
+	const { newBalance } = await getWakaTimeStats()
 	const today = new Date().toLocaleDateString()
 
 	const {
