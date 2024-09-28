@@ -9,7 +9,7 @@ interface IToastParams {
 	showTimer?: boolean
 }
 
-export function showInfoToast({ tabId, variant, msg, timer = 10, showTimer = false }: IToastParams): Promise<void> {
+export function showInfoToast({ tabId, variant, msg, timer = 5, showTimer = false }: IToastParams): Promise<void> {
 	const icon = getToastIcon(variant, 30)
 	const styleUrl = browser.runtime.getURL('css/background.css')
 	const toastId = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`

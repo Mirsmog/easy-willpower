@@ -7,7 +7,7 @@ const apiKey = config.API_KEY
 export const getWakaTimeStats = async () => {
 	if (!apiKey || !userId) throw Error('API_KEY or USER_ID is not defiend')
 
-	const currentDate = new Date().toISOString().split('T')[0]
+	const currentDate = new Date().getDate()
 
 	const url = `https://wakatime.com/api/v1/users/${userId}/durations?date=${currentDate}`
 

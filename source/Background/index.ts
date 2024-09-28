@@ -44,15 +44,18 @@ async function refreshBalance() {
 	const {
 		prevBalance = 0,
 		lastBalance = 0,
+		savedBalance = 0,
 		lastDateCheck = ''
 	} = await getLocalStorage(['lastBalance', 'prevBalance', 'lastDateCheck', 'savedBalance'])
 
 	if (lastDateCheck !== today) {
 		const unusedTime = Math.min(lastBalance, 360)
 		await setLocalStorage({
-			lastBalance: unusedTime,
+			lastBalance: 0,
 			prevBalance: 0,
-			lastDateCheck: today
+			savedBalance: unusedTime,
+			lastDateCheck: today,
+			rewardsHistory: []
 		})
 	}
 
@@ -62,8 +65,25 @@ async function refreshBalance() {
 		let currentBalance = lastBalance + diffBalance
 
 		const rewardChance = Math.random()
+
 		if (rewardChance <= 0.2) {
 			currentBalance = await applyReward(currentBalance)
+		}
+
+		if (newBalance > 60 && savedBalance > 0) {
+			const { currentTab } = await handleTabs()
+			currentBalance += savedBalance
+			await setLocalStorage({
+				savedBalance: 0
+			})
+
+			if (currentTab && currentTab.id) {
+				showInfoToast({
+					tabId: currentTab.id,
+					variant: 'info',
+					msg: `Your saved time has been added! Current: ${currentBalance}`
+				})
+			}
 		}
 
 		await setLocalStorage({ prevBalance: newBalance, lastBalance: currentBalance })
@@ -73,8 +93,10 @@ async function refreshBalance() {
 }
 
 async function checkAndUpdateBalance() {
-	let { lastBalance } = await getLocalStorage(['lastBalance'])
+	let { lastBalance = 0, heatEffect = { value: 0, level: 1 } } = await getLocalStorage(['lastBalance', 'heatEffect'])
 	const { isBalanceInUse, isOnBlockedPage, currentTab } = await handleTabs()
+	let heatLevel = heatEffect.level
+	let heatValue = heatEffect.value
 
 	if (!currentTab || !currentTab.id) return
 
@@ -82,8 +104,37 @@ async function checkAndUpdateBalance() {
 		handleBlockTab(currentTab, true)
 	}
 
+	if (!isBalanceInUse && heatValue > 0) {
+		heatValue = Math.max(heatValue - 2, 0)
+	}
+
+	if (heatValue > 118) {
+		heatLevel = 3
+	} else if (heatValue > 58) {
+		heatLevel = 2
+	} else {
+		heatLevel = 1
+	}
+
+	if (heatLevel !== heatEffect.level && currentTab.id) {
+		if (heatLevel === 1) {
+			showInfoToast({
+				tabId: currentTab.id,
+				variant: 'success',
+				msg: 'Heat level is back to normal. Joy!'
+			})
+		} else {
+			showInfoToast({
+				tabId: currentTab.id,
+				variant: 'warn',
+				msg: `Heat level updated. level: ${heatLevel}!`
+			})
+		}
+		await setLocalStorage({ heatEffect: { ...heatEffect, level: heatLevel } })
+	}
 	if (isBalanceInUse && lastBalance > 0) {
-		lastBalance--
+		heatValue++
+		lastBalance = lastBalance - heatLevel
 		await setLocalStorage({ lastBalance })
 	}
 
@@ -91,6 +142,7 @@ async function checkAndUpdateBalance() {
 		await showInfoToast({ variant: 'error', timer: 60, tabId: currentTab.id, showTimer: true })
 		handleBlockTab(currentTab)
 	}
+	await setLocalStorage({ heatEffect: { value: heatValue, level: heatLevel } })
 }
 refreshBalance()
 
