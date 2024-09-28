@@ -38,7 +38,8 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 }
 
 async function refreshBalance() {
-	const { newBalance } = await getWakaTimeStats()
+	//const { newBalance } = await getWakaTimeStats()
+	const newBalance = 3
 	const today = new Date().toLocaleDateString()
 
 	const {
@@ -81,7 +82,7 @@ async function refreshBalance() {
 				showInfoToast({
 					tabId: currentTab.id,
 					variant: 'info',
-					msg: `Your saved time has been added! Current: ${currentBalance}`
+					message: `Your saved time has been added! Current: ${currentBalance}`
 				})
 			}
 		}
@@ -121,13 +122,13 @@ async function checkAndUpdateBalance() {
 			showInfoToast({
 				tabId: currentTab.id,
 				variant: 'success',
-				msg: 'Heat level is back to normal. Joy!'
+				message: 'Heat level is back to normal. Joy!'
 			})
 		} else {
 			showInfoToast({
 				tabId: currentTab.id,
 				variant: 'warn',
-				msg: `Heat level updated. level: ${heatLevel}!`
+				message: `Heat level updated. level: ${heatLevel}!`
 			})
 		}
 		await setLocalStorage({ heatEffect: { ...heatEffect, level: heatLevel } })
@@ -139,7 +140,13 @@ async function checkAndUpdateBalance() {
 	}
 
 	if (!isOnBlockedPage && lastBalance === 1) {
-		await showInfoToast({ variant: 'error', timer: 60, tabId: currentTab.id, showTimer: true })
+		await showInfoToast({
+			variant: 'error',
+			message: 'Time left: $TIMER seconds',
+			timer: 60,
+			tabId: currentTab.id,
+			showTimer: true
+		})
 		handleBlockTab(currentTab)
 	}
 	await setLocalStorage({ heatEffect: { value: heatValue, level: heatLevel } })

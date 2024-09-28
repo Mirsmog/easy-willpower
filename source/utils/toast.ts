@@ -4,12 +4,12 @@ import { getToastIcon } from '../consts/icons'
 interface IToastParams {
 	tabId: number
 	variant: 'info' | 'warn' | 'success' | 'error'
-	msg?: string
+	message?: string
 	timer?: number
 	showTimer?: boolean
 }
 
-export function showInfoToast({ tabId, variant, msg, timer = 5, showTimer = false }: IToastParams): Promise<void> {
+export function showInfoToast({ tabId, variant, message, timer = 5, showTimer = false }: IToastParams): Promise<void> {
 	const icon = getToastIcon(variant, 30)
 	const styleUrl = browser.runtime.getURL('css/background.css')
 	const toastId = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
@@ -27,7 +27,7 @@ export function showInfoToast({ tabId, variant, msg, timer = 5, showTimer = fals
 		browser.runtime.onMessage.addListener(listener)
 
 		browser.tabs.executeScript(tabId, {
-			code: `(${createToast.toString()})(${JSON.stringify(icon)}, ${JSON.stringify(msg)}, ${timer}, '${variant}', '${toastId}', ${showTimer})`
+			code: `(${createToast.toString()})(${JSON.stringify(icon)}, ${JSON.stringify(message)}, ${timer}, '${variant}', '${toastId}', ${showTimer})`
 		})
 	})
 }
@@ -49,7 +49,12 @@ function createToast(
 
 	const bodyDiv = document.createElement('div')
 	bodyDiv.className = 'body'
-	bodyDiv.textContent = message
+
+	if (showTimer) {
+		bodyDiv.textContent = message.replace('$TIMER', `${timer}`)
+	} else {
+		bodyDiv.textContent = message
+	}
 
 	const progressBar = document.createElement('span')
 	progressBar.className = 'progress'
@@ -89,7 +94,7 @@ function createToast(
 		}
 
 		if (showTimer) {
-			bodyDiv.textContent = `Time left: ${(timeLeft / 1000).toFixed(0)} minutes`
+			bodyDiv.textContent = message.replace('$TIMER', `${(timeLeft / 1000).toFixed(0)}`)
 		}
 
 		const percentage = Math.max(0, (timeLeft / (timer * 1000)) * 100)
