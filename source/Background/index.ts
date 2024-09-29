@@ -1,7 +1,13 @@
-import { Tabs, WebRequest } from 'webextension-polyfill'
+import { Tabs } from 'webextension-polyfill'
 import { browser } from 'webextension-polyfill-ts'
-import { getLocalStorage, applyReward, getWakaTimeStats, setLocalStorage, showInfoToast } from '../utils'
-import './styles.scss'
+import {
+	getLocalStorage,
+	applyReward,
+	getWakaTimeStats,
+	setLocalStorage,
+	showInfoToast,
+	handleNavigation
+} from '../utils'
 
 async function handleTabs() {
 	const { accessLimitedSites = [] } = await getLocalStorage(['accessLimitedSites'])
@@ -30,7 +36,13 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 	const blockUrl = browser.runtime.getURL(`blocked.html?refer=${tab.url}`)
 	const referUrl = new URLSearchParams(new URL(tab.url || '').search).get('refer')
 
-	if (unblock && referUrl) {
+	if (unblock && referUrl && tab.id) {
+		await showInfoToast({
+			tabId: tab.id,
+			variant: 'success',
+			message: 'Redirecting you back. Joy!',
+			timer: 2
+		})
 		await browser.tabs.update(tab.id, { url: referUrl })
 	} else {
 		await browser.tabs.update(tab.id, { url: blockUrl })
@@ -147,40 +159,18 @@ async function checkAndUpdateBalance() {
 		await showInfoToast({
 			variant: 'error',
 			message: 'Time left: $TIMER seconds',
-			timer: 60,
+			timer: 30,
 			tabId: currentTab.id,
 			showTimer: true
 		})
 		handleBlockTab(currentTab)
 	}
+	if (!isOnBlockedPage && lastBalance <= 0) {
+		handleBlockTab(currentTab)
+	}
 	await setLocalStorage({ heatEffect: { value: heatValue, level: heatLevel } })
 }
+
 refreshBalance()
-
 setInterval(refreshBalance, 60000)
-
-browser.webRequest.onBeforeRequest.addListener(
-	async (details: WebRequest.OnBeforeRequestDetailsType) => {
-		const { lastBalance } = await getLocalStorage(['lastBalance'])
-		const { accessLimitedSites = [] } = await getLocalStorage(['accessLimitedSites'])
-
-		if (!details.originUrl?.includes('blocked.html')) {
-			if (lastBalance <= 0) {
-				for (const site of accessLimitedSites) {
-					if (details.url.includes(site)) {
-						const cleanUrl = new URL(details.originUrl || '')
-						const originalUrl = `${cleanUrl.href}`
-
-						const blockedPageUrl = browser.runtime.getURL(`blocked.html?refer=${encodeURIComponent(originalUrl)}`)
-
-						browser.tabs.update(details.tabId, { url: blockedPageUrl })
-						return { cancel: true }
-					}
-				}
-			}
-		}
-		return { cancel: false }
-	},
-	{ urls: ['<all_urls>'] },
-	['blocking']
-)
+handleNavigation()

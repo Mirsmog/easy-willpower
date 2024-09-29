@@ -1,0 +1,125 @@
+html {
+	color-scheme: dark;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family:
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		Oxygen,
+		Ubuntu,
+		Cantarell,
+		'Open Sans',
+		'Helvetica Neue',
+		sans-serif;
+	background-color: rgb(20, 20, 20);
+}
+
+.container {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	min-height: 100dvh;
+	overflow: hidden;
+}
+
+.background-image {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-size: cover;
+	background-position: center;
+	opacity: 0;
+}
+
+.background-image.fadeIn {
+	animation: fadeIn 1s ease-in forwards;
+}
+
+.wrapper {
+	position: relative;
+	z-index: 1;
+	min-height: 100dvh;
+	width: 100%;
+	height: 100%;
+	backdrop-filter: blur(1.25em);
+	background-color: rgba(20, 20, 20, 0.85);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.quote {
+	width: 100%;
+	max-width: 700px;
+	background-color: #1e1e1e;
+	padding: 50px 60px;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 48px;
+	box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+	transform: scale(0.8);
+	opacity: 0;
+}
+
+.quote.scaleIn {
+	animation: scaleIn 0.6s ease-in forwards;
+}
+
+.quote .text {
+	font-size: 28px;
+	font-weight: 500;
+	color: #f1f1f1;
+	line-height: 1.4;
+}
+
+.quote .text .symbol {
+	color: rgb(255, 215, 137);
+	font-size: 32px;
+}
+
+.quote .author {
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.quote .author .author__wrapper {
+	padding-top: 12px;
+	border-top: 1px solid rgb(255, 215, 137);
+	display: inline-block;
+}
+
+.quote .author .name {
+	font-size: 18px;
+	color: #bbb;
+}
+
+@keyframes scaleIn {
+	from {
+		opacity: 0;
+		transform: scale(0.8);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
