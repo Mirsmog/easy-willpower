@@ -35,7 +35,7 @@ async function handleTabs() {
 async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 	if (!tab || !tab.id) return
 
-	const { isOnBlockedPage } = await handleTabs()
+	const { isOnBlockedPage, isOnLimitedTab } = await handleTabs()
 	const blockUrl = browser.runtime.getURL(`blocked.html?refer=${tab.url}`)
 	const referUrl = new URLSearchParams(new URL(tab.url || '').search).get('refer')
 
@@ -47,7 +47,7 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 			timer: 2
 		})
 		await browser.tabs.update(tab.id, { url: referUrl })
-	} else if (!isOnBlockedPage) {
+	} else if (!isOnBlockedPage && isOnLimitedTab) {
 		await browser.tabs.update(tab.id, { url: blockUrl })
 	}
 }
