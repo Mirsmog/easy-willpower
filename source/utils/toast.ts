@@ -184,6 +184,11 @@ function createToast(
 			}, 1000)
 			return
 		}
+
+		if (showTimer) {
+			bodyDiv.textContent = message.replace('$TIMER', `${(timeLeft / 1000).toFixed(0)}`)
+		}
+
 		const percentage = Math.max(0, (timeLeft / (timer * 1000)) * 100)
 		progressBar.style.width = percentage + '%'
 		timeLeft -= 100

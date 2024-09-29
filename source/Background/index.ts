@@ -33,10 +33,13 @@ async function handleTabs() {
 }
 
 async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
+	if (!tab || !tab.id) return
+
+	const { isOnBlockedPage } = await handleTabs()
 	const blockUrl = browser.runtime.getURL(`blocked.html?refer=${tab.url}`)
 	const referUrl = new URLSearchParams(new URL(tab.url || '').search).get('refer')
 
-	if (unblock && referUrl && tab.id) {
+	if (unblock && referUrl) {
 		await showInfoToast({
 			tabId: tab.id,
 			variant: 'success',
@@ -44,7 +47,7 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 			timer: 2
 		})
 		await browser.tabs.update(tab.id, { url: referUrl })
-	} else {
+	} else if (!isOnBlockedPage) {
 		await browser.tabs.update(tab.id, { url: blockUrl })
 	}
 }
@@ -155,7 +158,7 @@ async function checkAndUpdateBalance() {
 		await setLocalStorage({ lastBalance })
 	}
 
-	if (!isOnBlockedPage && lastBalance === 1) {
+	if (lastBalance === 1) {
 		await showInfoToast({
 			variant: 'error',
 			message: 'Time left: $TIMER seconds',
@@ -163,9 +166,11 @@ async function checkAndUpdateBalance() {
 			tabId: currentTab.id,
 			showTimer: true
 		})
+		lastBalance--
+		await setLocalStorage({ lastBalance })
 		handleBlockTab(currentTab)
 	}
-	if (!isOnBlockedPage && lastBalance <= 0) {
+	if (lastBalance <= 0) {
 		handleBlockTab(currentTab)
 	}
 	await setLocalStorage({ heatEffect: { value: heatValue, level: heatLevel } })
