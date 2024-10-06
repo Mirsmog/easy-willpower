@@ -1,6 +1,9 @@
 import React, { CSSProperties, useEffect, useState } from 'react'
 import { browser } from 'webextension-polyfill-ts'
 import { IHistoryReward } from '../utils/reward'
+import './styles.scss'
+
+// FIX: Clear code move styles to css file and change design
 
 const styles = {
 	container: {
@@ -24,6 +27,8 @@ const styles = {
 	} as CSSProperties,
 	balance: {
 		fontSize: '24px',
+		display: 'flex',
+		flexWrap: 'wrap',
 		fontWeight: 'bold',
 		marginBottom: '20px',
 		color: '#16a085',
@@ -128,6 +133,7 @@ const styles = {
 
 const Popup: React.FC = () => {
 	const [accessLimitedSites, setAccessLimitedSites] = useState<string[]>([])
+	const [savedBalance, setSavedBalance] = useState(0)
 	const [heatValue, setHeatValue] = useState({ value: 0 })
 	const [balance, setBalance] = useState(0)
 	const [newSite, setNewSite] = useState('')
@@ -138,10 +144,12 @@ const Popup: React.FC = () => {
 			'accessLimitedSites',
 			'lastBalance',
 			'rewardsHistory',
+			'savedBalance',
 			'heatEffect'
 		])
 		setAccessLimitedSites(result.accessLimitedSites || [])
 		setBalance(result.lastBalance || 0)
+		setSavedBalance(result.savedBalance || 0)
 		setRewardsHistory(result.rewardsHistory || [])
 		setHeatValue({ value: result.heatEffect.value || 0 })
 	}
@@ -178,7 +186,7 @@ const Popup: React.FC = () => {
 
 	const hours = Math.floor(balance / 60)
 	const remainingMinutes = balance % 60
-	const formattedTime = `${hours}h ${remainingMinutes}m - (${balance})`
+	const formattedTime = `${hours}h ${remainingMinutes}m - (${balance}) ${'Saved' + (savedBalance > 0 && savedBalance)}`
 
 	return (
 		<div style={styles.container}>

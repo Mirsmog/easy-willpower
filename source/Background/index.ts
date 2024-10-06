@@ -2,9 +2,9 @@ import { Tabs } from 'webextension-polyfill'
 import { browser } from 'webextension-polyfill-ts'
 import {
 	getLocalStorage,
+	setLocalStorage,
 	applyReward,
 	getWakaTimeStats,
-	setLocalStorage,
 	showInfoToast,
 	handleNavigation
 } from '../utils'
@@ -162,7 +162,7 @@ async function checkAndUpdateBalance() {
 		await showInfoToast({
 			variant: 'error',
 			message: 'Time left: $TIMER seconds',
-			timer: 30,
+			timer: 60,
 			tabId: currentTab.id,
 			showTimer: true
 		})
@@ -177,5 +177,5 @@ async function checkAndUpdateBalance() {
 }
 
 refreshBalance()
-setInterval(refreshBalance, 60000)
 handleNavigation()
+setInterval(refreshBalance, 60000)
