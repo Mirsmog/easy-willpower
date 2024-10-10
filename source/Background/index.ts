@@ -55,14 +55,16 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 async function refreshBalance() {
 	const { newBalance } = await getWakaTimeStats()
 	const today = new Date().toLocaleDateString()
+	const currentHour = new Date().getHours()
 
 	const {
 		prevBalance = 0,
 		lastBalance = 0,
 		savedBalance = 0,
 		lastDateCheck = '',
+		earlyBonus = false,
 		heatEffect = { value: 0, level: 1 }
-	} = await getLocalStorage(['lastBalance', 'prevBalance', 'lastDateCheck', 'savedBalance', 'heatEffect'])
+	} = await getLocalStorage(['lastBalance', 'prevBalance', 'lastDateCheck', 'savedBalance', 'heatEffect', 'earlyBonus'])
 
 	if (lastDateCheck !== today) {
 		const unusedTime = Math.min(lastBalance, 360)
@@ -71,6 +73,7 @@ async function refreshBalance() {
 			prevBalance: 0,
 			savedBalance: unusedTime,
 			lastDateCheck: today,
+			earlyBonus: false,
 			rewardsHistory: []
 		})
 	}
@@ -78,6 +81,7 @@ async function refreshBalance() {
 	const diffBalance = newBalance - prevBalance
 
 	if (diffBalance > 0) {
+		const { currentTab } = await handleTabs()
 		let currentBalance = lastBalance + diffBalance
 
 		const rewardChance = Math.random()
@@ -86,8 +90,19 @@ async function refreshBalance() {
 			currentBalance = await applyReward(currentBalance)
 		}
 
+		if (!earlyBonus && currentHour === 4 && newBalance >= 10) {
+			currentBalance += 50
+			await setLocalStorage({ earlyBonus: true })
+			if (currentTab && currentTab.id) {
+				showInfoToast({
+					tabId: currentTab.id,
+					variant: 'info',
+					message: `You've earned a early bonus! Current balance: ${currentBalance}`
+				})
+			}
+		}
+
 		if (newBalance > 60 && savedBalance > 0) {
-			const { currentTab } = await handleTabs()
 			currentBalance += savedBalance
 			await setLocalStorage({
 				savedBalance: 0

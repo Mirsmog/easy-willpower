@@ -186,12 +186,13 @@ const Popup: React.FC = () => {
 
 	const hours = Math.floor(balance / 60)
 	const remainingMinutes = balance % 60
-	const formattedTime = `${hours}h ${remainingMinutes}m - (${balance}) ${'Saved' + (savedBalance > 0 && savedBalance)}`
+	const formattedTime = `${hours}h ${remainingMinutes}m - (${balance})`
 
 	return (
 		<div style={styles.container}>
 			<h1 style={styles.header}>🎉 Time Balance</h1>
-			<div>
+			<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+				{savedBalance > 0 && <div>Saved: {savedBalance}</div>}
 				<div style={styles.balance}>{formattedTime}</div>
 			</div>
 			{heatValue.value > 0 && (
