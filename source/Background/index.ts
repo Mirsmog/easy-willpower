@@ -102,6 +102,12 @@ async function refreshBalance() {
 			}
 		}
 
+		// penalty
+		if (!earlyBonus && currentHour > 4) {
+			currentBalance -= 120
+			await setLocalStorage({ earlyBonus: true })
+		}
+
 		if (newBalance > 60 && savedBalance > 0) {
 			currentBalance += savedBalance
 			await setLocalStorage({

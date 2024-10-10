@@ -31,7 +31,6 @@ const styles = {
 		flexWrap: 'wrap',
 		fontWeight: 'bold',
 		marginBottom: '20px',
-		color: '#16a085',
 		textAlign: 'center'
 	} as CSSProperties,
 	subHeader: {
@@ -184,16 +183,19 @@ const Popup: React.FC = () => {
 		browser.storage.local.set({ accessLimitedSites: updatedSites })
 	}
 
-	const hours = Math.floor(balance / 60)
-	const remainingMinutes = balance % 60
-	const formattedTime = `${hours}h ${remainingMinutes}m - (${balance})`
+	const hours = Math.floor(Math.abs(balance) / 60)
+	const remainingMinutes = Math.abs(balance) % 60
+	const sign = balance < 0 ? '-' : ''
+
+	const formattedTime = `${sign} ${hours}h ${remainingMinutes}m - (${balance})`
 
 	return (
 		<div style={styles.container}>
 			<h1 style={styles.header}>🎉 Time Balance</h1>
 			<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 				{savedBalance > 0 && <div>Saved: {savedBalance}</div>}
-				<div style={styles.balance}>{formattedTime}</div>
+
+				<div style={{ ...styles.balance, color: (balance < 0 && 'crimson') || '#16a085' }}>{formattedTime}</div>
 			</div>
 			{heatValue.value > 0 && (
 				<div style={{ display: 'flex', justifyContent: 'center', gap: 5, fontSize: 18 }}>
