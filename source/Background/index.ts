@@ -40,12 +40,14 @@ async function handleBlockTab(tab: Tabs.Tab, unblock?: boolean) {
 	const referUrl = new URLSearchParams(new URL(tab.url || '').search).get('refer')
 
 	if (unblock && referUrl) {
-		await showInfoToast({
-			tabId: tab.id,
-			variant: 'success',
-			message: 'Redirecting you back. Joy!',
-			timer: 2
-		})
+		if (tab.active) {
+			await showInfoToast({
+				tabId: tab.id,
+				variant: 'success',
+				message: 'Redirecting you back. Joy!',
+				timer: 2
+			})
+		}
 		await browser.tabs.update(tab.id, { url: referUrl })
 	} else if (!isOnBlockedPage && isOnLimitedTab) {
 		await browser.tabs.update(tab.id, { url: blockUrl })
@@ -142,7 +144,11 @@ async function checkAndUpdateBalance() {
 	if (!currentTab || !currentTab.id) return
 
 	if (isOnBlockedPage && lastBalance > 0) {
-		handleBlockTab(currentTab, true)
+		const allTabs = await browser.tabs.query({ currentWindow: true })
+		const blockedTabs = allTabs.filter(tab => tab.url?.includes('blocked.html'))
+		for (const tab of blockedTabs) {
+			handleBlockTab(tab, true)
+		}
 	}
 
 	if (!isBalanceInUse && heatValue > 0) {
